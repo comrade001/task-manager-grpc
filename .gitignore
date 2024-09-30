@@ -1,0 +1,13 @@
+# Archivos de Go
+bin/
+pkg/
+cmd/
+# Archivos de caché
+*.log
+*.out
+*.tmp
+# Archivos generados de Protobuf
+*.pb.go
+*.pb.gw.go
+# Directorios de compilación
+/dist

@@ -1,0 +1,72 @@
+syntax = "proto3";  // Define la versión de Protobuf a utilizar
+
+package taskmanager;  // Define el nombre del paquete
+
+option go_package = "task-manager/pkg/taskmanager";
+
+// Definición de la estructura de una tarea.
+message Task {
+    int32 id = 1;
+    string title = 2;
+    string description = 3;
+    string status = 4;
+    string created_at = 5;
+}
+
+service TaskManager {
+    // RPC para crear una nueva tarea.
+    rpc CreateTask (CreateTaskRequest) returns (CreateTaskResponse);
+
+    // RPC para obtener la lista de todas las tareas.
+    rpc GetTasks (GetTasksRequest) returns (GetTasksResponse);
+
+    // RPC para actualizar el estado de una tarea.
+    rpc UpdateTaskStatus (UpdateTaskStatusRequest) returns (UpdateTaskStatusResponse);
+
+    //RPC para eliminar una tarea por su ID.
+    rpc DeleteTask (DeleteTaskRequest) returns (DeleteTaskResponse);
+}
+
+// Mensaje para la solicitud de creación de una nueva tarea.
+message CreateTaskRequest {
+    string title = 1;
+    string description = 2;
+}
+
+// Mensaje de respuesta al crear una tarea.
+message CreateTaskResponse {
+    int32 id = 1;
+    bool success = 2;
+    string message = 3;
+}
+
+// Mensaje para la solicitud de obtener todas las tareas.
+message GetTasksRequest {}
+
+// Mensaje de respuesta con la lista de tareas.
+message GetTasksResponse {
+    repeated Task tasks = 1; //Lista de tareas
+}
+
+// Mensaje para actualizar el estado de una tarea.
+message UpdateTaskStatusRequest {
+    int32 id = 1;
+    string status = 2;
+}
+
+// Mensaje de respuesta al actualizar el estado de una tarea.
+message UpdateTaskStatusResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+// Mensaje para la solicitud de eliminación de una tarea.
+message DeleteTaskRequest {
+    int32 id = 1;
+}
+
+// Mensaje de respuesta al eliminar una tarea.
+message DeleteTaskResponse {
+    bool success = 1;
+    string message = 2;
+}
