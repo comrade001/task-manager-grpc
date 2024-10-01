@@ -1,146 +1,135 @@
 
 # Task Manager gRPC Service
 
-This repository contains a basic Task Manager service implemented in Go using gRPC and PostgreSQL. The purpose of this project is to showcase CRUD operations for managing tasks in a simple and scalable backend service.
+This is a gRPC-based Task Manager service built with Go, PostgreSQL, and Protobuf. It provides functionalities to create, read, update, and delete tasks in a PostgreSQL database using a gRPC interface.
 
-## Overview
+## Prerequisites
 
-The Task Manager service provides the following functionalities:
+1. [Go](https://golang.org/doc/install) (version 1.17 or higher).
+2. [PostgreSQL](https://www.postgresql.org/download/) installed and running.
+3. `psql` configured in the `PATH` environment variable for command-line operations.
+4. `protoc` (Protocol Buffers compiler) installed for generating Go files from `.proto` definitions.
 
-- **CreateTask**: Create a new task with a title and description.
-- **GetTasks**: Retrieve a list of all existing tasks.
-- **UpdateTaskStatus**: Update the status of a specific task (pending, in progress, completed).
-- **DeleteTask**: Delete a task by its ID.
+## Getting Started
 
-The project uses `Protobuf` to define the service and message structures, and `gRPC` to facilitate communication between the server and the client. PostgreSQL is used as the database for storing tasks.
+### Step 1: Clone the repository
 
-## Project Structure
-
-The project is organized into the following folders:
-
-```
-TaskManager/
-├── cmd/                    # Contains the main entry point of the application
-│   └── main.go
-├── db/                     # Database-related files (scripts, migrations)
-├── internal/               # Business logic and server implementation
-├── pkg/                    # Generated protobuf files and shared utilities
-│   ├── task_manager.pb.go
-│   └── task_manager_grpc.pb.go
-├── proto/                  # Protobuf definitions
-│   └── task_manager.proto
-└── README.md               # Project documentation
+```bash
+git clone https://github.com/your-username/task-manager.git
+cd task-manager
 ```
 
-## Technologies Used
+### Step 2: Set up the PostgreSQL database
 
-- **Go**: Backend programming language for implementing the gRPC server.
-- **gRPC**: Framework for communication between client and server using HTTP/2 and Protobuf.
-- **PostgreSQL**: Relational database for storing tasks.
-- **Protobuf**: Serialization format used for defining gRPC messages and services.
+1. Connect to PostgreSQL as an admin user (e.g., `postgres`):
 
-## Setup and Installation
-
-### Prerequisites
-
-- [Go](https://golang.org/dl/) (version 1.16 or higher)
-- [PostgreSQL](https://www.postgresql.org/download/)
-- [Protobuf Compiler (`protoc`)](https://grpc.io/docs/protoc-installation/)
-
-### Steps
-
-1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-username/task-manager-grpc.git
-   cd task-manager-grpc
+   psql -U postgres
    ```
 
-2. **Install Go dependencies**:
-   ```bash
-   go mod tidy
+2. Create the database `task_manager`:
+
+   ```sql
+   CREATE DATABASE task_manager;
    ```
 
-3. **Setup the database**:
-   - Create a PostgreSQL database named `task_manager`.
-   - Create a user `task_user` with password `task_password`.
-   - Grant necessary permissions to `task_user` on the `task_manager` database.
+3. Create the user `task_user` with a password:
 
-4. **Run database migrations**:
-   - (Optional) You can create a `db/migrations` folder and add SQL scripts to initialize the `tasks` table.
-
-5. **Compile the `.proto` file**:
-   ```bash
-   protoc --go_out=./pkg --go-grpc_out=./pkg proto/task_manager.proto
+   ```sql
+   CREATE USER task_user WITH PASSWORD 'task_password';
    ```
 
-6. **Run the gRPC server**:
-   ```bash
-   go run cmd/main.go
+4. Grant all privileges on the `task_manager` database to `task_user`:
+
+   ```sql
+   GRANT ALL PRIVILEGES ON DATABASE task_manager TO task_user;
    ```
 
-7. **Test the service**:
-   - Use a gRPC client like [Postman](https://learning.postman.com/docs/sending-requests/grpc/) or `grpcurl` to test the service methods (`CreateTask`, `GetTasks`, etc.).
+5. Grant usage and create permissions on the `public` schema to `task_user`:
 
-## Example Requests
+   ```sql
+   GRANT USAGE ON SCHEMA public TO task_user;
+   GRANT CREATE ON SCHEMA public TO task_user;
+   ```
 
-### Create a New Task
+### Step 3: Create the `tasks` table
 
-```proto
-rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse);
+1. Connect to the `task_manager` database as `task_user`:
+
+   ```bash
+   psql -U task_user -d task_manager
+   ```
+
+2. Create the `tasks` table:
+
+   ```sql
+   CREATE TABLE tasks (
+       id SERIAL PRIMARY KEY,
+       title VARCHAR(255) NOT NULL,
+       description TEXT,
+       status VARCHAR(50) NOT NULL DEFAULT 'pending',
+       created_at TIMESTAMP NOT NULL DEFAULT NOW()
+   );
+   ```
+
+### Step 4: Generate Go files from the `.proto` file
+
+Make sure you're in the `proto` directory:
+
+```bash
+cd proto
 ```
 
-**Request**:
-```json
-{
-  "title": "Finish Go project",
-  "description": "Complete the task manager project and update README.md"
-}
+Run the following command to generate the Go files:
+
+```bash
+protoc --go_out=../pkg --go-grpc_out=../pkg task_manager.proto
 ```
 
-**Response**:
-```json
-{
-  "id": 1,
-  "success": true,
-  "message": "Task created successfully"
-}
+### Step 5: Update the configuration in `main.go`
+
+Check that the database connection string in `main.go` is correct:
+
+```go
+connStr := "user=task_user password=task_password dbname=task_manager sslmode=disable"
 ```
 
-### Get All Tasks
+### Step 6: Run the gRPC server
 
-```proto
-rpc GetTasks(GetTasksRequest) returns (GetTasksResponse);
+Start the server by running the following command:
+
+```bash
+go run cmd/main.go
 ```
 
-**Request**:
-```json
-{}
+You should see a message like:
+
+```
+gRPC server listening on port 50051...
 ```
 
-**Response**:
-```json
-{
-  "tasks": [
-    {
-      "id": 1,
-      "title": "Finish Go project",
-      "description": "Complete the task manager project and update README.md",
-      "status": "pending",
-      "created_at": "2024-09-30T10:15:30Z"
-    }
-  ]
-}
-```
+### Step 7: Test the service with Postman or `grpcurl`
 
-## License
+1. Import the `task_manager.proto` file in Postman and configure the connection to `localhost:50051`.
+2. Use the `CreateTask` method with the following payload:
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+   ```json
+   {
+     "title": "New Task",
+     "description": "This is a test task from Postman"
+   }
+   ```
 
-## Contributing
+3. You should receive a response like:
 
-Feel free to open issues or submit pull requests if you have any suggestions or improvements. Contributions are welcome!
+   ```json
+   {
+     "id": 1,
+     "success": true,
+     "message": "Task created successfully"
+   }
+   ```
 
----
+## Additional Information
 
-**Author**: Your Name (your-email@example.com)  
-**LinkedIn**: [Your LinkedIn Profile](https://linkedin.com/in/your-profile)  
+This project uses gRPC for communication and PostgreSQL for data storage. For more information on how to extend the service or modify it, check the [official gRPC documentation](https://grpc.io/docs/) and [PostgreSQL documentation](https://www.postgresql.org/docs/).

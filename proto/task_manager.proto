@@ -2,7 +2,7 @@ syntax = "proto3";  // Define la versión de Protobuf a utilizar
 
 package taskmanager;  // Define el nombre del paquete
 
-option go_package = "task-manager/pkg/taskmanager";
+option go_package = "./taskmanager";
 
 // Definición de la estructura de una tarea.
 message Task {
