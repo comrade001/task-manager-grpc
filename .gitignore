@@ -1,7 +1,6 @@
 # Archivos de Go
 bin/
 pkg/
-cmd/
 # Archivos de caché
 *.log
 *.out
